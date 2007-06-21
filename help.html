@@ -1,0 +1,33 @@
+<html>
+<head>
+<link rel="stylesheet" href="http://gallery.danslereseau.com/fb/style.css?1:1" type="text/css" />
+</head>
+<body>
+<div style="padding: 10px;">
+	<h1>Import Photos from a Gallery</h1>
+	<br/>
+
+	<h2>Help</h2>
+	<br/>
+
+	<p>The Gallery Import application will allow you, the end-user, to import pictures from any <a href="http://gallery.menalto.com/" target="_new">Gallery</a> 2.x installation into your Facebook profile, as Photos Albums.</p>
+	<p>The first step you need to do in order to be able to import pictures into Facebook from a Gallery installation is install a small helper PHP file in your Gallery installation.
+	<ol>
+		<li>Create a new 'fb' subdirectory in your Gallery installation (using FTP or SSH), i.e. in the directory that contains main.php etc.</li>
+		<li>Download the <a href="http://gallery.danslereseau.com/fb/export_fb.phps">export_fb.phps helper file</a>.</li>
+		<li>Rename this file 'export_fb.php' and upload it in the new directory you just created ('fb').</li>
+	</ol>
+	The resulting script should be available at: http://your_gallery_url/fb/export_fb.php
+	</p>
+	<p>Note: You will not need to repeat this step each time you want to import pictures from Gallery to Facebook; this was a one time setup step.</p>
+	<p>Next, you can start an import session by clicking the link that has been added in your profile page, under the 'Gallery Import' section in the right column. (Or if you just added the Gallery Import application, you've already been redirected to a new import session.)</p>
+	<p>Once the import is completed, you'll be redirected to the last photos album that was created to import your pictures. You'll need to Accept all the photos that have been uploaded by the Gallery Import application before they'll be available to others.</p>
+	<p>If you imported a Gallery album with more than 60 pictures, more than one photos album will have been created in Facebook. Make sure you Accept the pictures in all the new albums, not just the last one.</p>
+
+	<p>If you find any problem or inconsistency in your use of the Gallery Import application, please report them to the developer(s), or discuss them in <a href="http://gallery.menalto.com/node/65135" target="_new">this thread</a> of the Gallery forums.</p>
+
+	<hr/>
+	<div style="clear: both;"/>
+</div>
+</body>
+</html>
