@@ -1,7 +1,10 @@
 <?php
 require('init.php');
+header('Content-Type: text/html; charset=utf-8');
 
 if (isset($_POST['gallery_export_url'])) {
+	setcookie('gallery_url', $_POST['gallery_export_url'], time()+360*24*60*60);
+
 	$_SESSION['gallery_export_url'] = $_POST['gallery_export_url'];
 	if (strstr( $_POST['gallery_export_url'], '/fb/export_fb.php') === FALSE) {
 		die("Error: the export_fb.php script needs to be in a 'fb' subdirectory of your Gallery installation. Example: http://www.domain.com/gallery/fb/export_fb.php");
