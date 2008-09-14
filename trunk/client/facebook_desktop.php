@@ -1,9 +1,10 @@
 <?php
+// Copyright 2004-2008 Facebook. All Rights Reserved.
 //
 // +---------------------------------------------------------------------------+
-// | Facebook Platform PHP5 client                                 |
+// | Facebook Platform PHP5 client                                             |
 // +---------------------------------------------------------------------------+
-// | Copyright (c) 2007 Facebook, Inc.                                         | 
+// | Copyright (c) 2007 Facebook, Inc.                                         |
 // | All rights reserved.                                                      |
 // |                                                                           |
 // | Redistribution and use in source and binary forms, with or without        |
@@ -48,8 +49,9 @@ class FacebookDesktop extends Facebook {
 
   public function do_get_session($auth_token) {
     $this->api_client->secret = $this->app_secret;
+    $this->api_client->session_key = null;
     $session_info = parent::do_get_session($auth_token);
-    if (isset($session_info['secret']) && $session_info['secret']) {
+    if (!empty($session_info['secret'])) {
       // store the session secret
       $this->set_session_secret($session_info['secret']);
     }
@@ -70,7 +72,7 @@ class FacebookDesktop extends Facebook {
 
         // now that we have a valid session secret, verify the signature
         $this->verify_sig = true;
-        if ($this->validate_fb_params()) {
+        if ($this->validate_fb_params(false)) {
           return $user;
         } else {
           // validation failed
