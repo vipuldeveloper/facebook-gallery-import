@@ -38,6 +38,7 @@ if (isset($_POST['gallery_export_url'])) {
 	$_SESSION['gallery_redirects'] = 1;
 	$_SESSION['gallery_uploads'] = 0;
 	$_SESSION['gallery_skips'] = 0;
+	$_SESSION['gallery_existing_photos'] = array();
 	$facebook->redirect("http://gallery.danslereseau.com/fb/?gallery_import=".time());
 
 } else if (isset($_GET['gallery_import'])) {
@@ -49,28 +50,27 @@ if (isset($_POST['gallery_export_url'])) {
 		}
 
 		// Create a new album to continue the import
-		if (($_SESSION['gallery_uploads'] + $_SESSION['gallery_skips']) % 60 == 0) {
-			if ($_SESSION['gallery_uploads'] == 0 && $_SESSION['gallery_skips'] == 0) {
-				$gallery_name = $_SESSION['gallery_name'];
-			} else {
-				$gallery_name = $_SESSION['gallery_name'] ." (". ((($_SESSION['gallery_uploads'] + $_SESSION['gallery_skips']) / 60) + 1) .")";
-			}
-
-			$existing_album = FALSE;
+		if ($_SESSION['gallery_uploads'] == 0 && $_SESSION['gallery_skips'] == 0) {
+			$gallery_name = $_SESSION['gallery_name'];
+			$album_exists = FALSE;
 		    $albums = $facebook->api_client->photos_getAlbums(null, null, null);
 			if ($albums && is_array($albums)) {
 				foreach ($albums as $album) {
 					if ($album['name'] == $gallery_name) {
-						$existing_album = TRUE;
+						$album_exists = TRUE;
 						break;
 					}
 				}
 			}
-			if (!$existing_album) {
+			if (!$album_exists) {
 			    $album = $facebook->api_client->photos_createAlbum($gallery_name);
 			}
+
 			$_SESSION['gallery_album'] = $album;
-			$_SESSION['gallery_existing_photos'] = $facebook->api_client->photos_get(null, $_SESSION['gallery_album']['aid'], null);
+			$p = $facebook->api_client->photos_get(null, $_SESSION['gallery_album']['aid'], null);
+			if (is_array($p)) {
+				$_SESSION['gallery_existing_photos'] = array_merge($_SESSION['gallery_existing_photos'], $p);
+			}
 		}
 
 		$photo_url = array_shift($_SESSION['gallery_selected_photos']);
@@ -88,7 +88,21 @@ if (isset($_POST['gallery_export_url'])) {
 		}
 		if (!$existing_photo) {
 			$photo_url = $_SESSION['gallery_url'] . $photo->url;
-		    $photo = $facebook->api_client->photos_upload($photo_url, $_SESSION['gallery_album']['aid'], $photo->caption);
+			try {
+			    $photo = $facebook->api_client->photos_upload($photo_url, $_SESSION['gallery_album']['aid'], $photo->caption);
+			} catch (FacebookRestClientException $e) {
+				if ($e->getMessage() == 'Album is full') {
+					# Create a new album
+					$album = create_next_album($_SESSION['gallery_name']);
+					$_SESSION['gallery_album'] = $album;
+					$p = $facebook->api_client->photos_get(null, $_SESSION['gallery_album']['aid'], null);
+					if (is_array($p)) {
+						$_SESSION['gallery_existing_photos'] = array_merge($_SESSION['gallery_existing_photos'], $p);
+					}
+					# Retry the upload
+				    $photo = $facebook->api_client->photos_upload($photo_url, $_SESSION['gallery_album']['aid'], $photo->caption);
+				}
+			}
 			$_SESSION['gallery_uploads']++;
 			break;
 		}
@@ -105,6 +119,36 @@ if (isset($_POST['gallery_export_url'])) {
 
 } else {
 	$template = 'step1.html';
+}
+
+function create_next_album($root_name) {
+	global $facebook;
+	$new_album = null;
+    $albums = $facebook->api_client->photos_getAlbums(null, null, null);
+	if ($albums && is_array($albums)) {
+		$max_num = 0;
+		foreach ($albums as $album) {
+			if (strpos($album['name'], $root_name) === 0) {
+				if ($album['name'] == $root_name && $max_num == 0) {
+					$max_num = 1;
+				}
+				if (ereg($root_name.' \(([0-9]+)\)', $album['name'], $regs)) {
+					$num = (int) $regs[1];
+					if ($num > $max_num) {
+						$max_num = $num;
+					}
+				}
+			}
+		}
+		$next_num = $max_num+1;
+		if ($next_num == 1) {
+			$gallery_name = $root_name;
+		} else {
+			$gallery_name = "$root_name ($next_num)";
+		}
+		$new_album = $facebook->api_client->photos_createAlbum($gallery_name);
+	}
+	return $new_album;
 }
 
 include('template.html');
