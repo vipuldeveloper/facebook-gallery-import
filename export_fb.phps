@@ -1,6 +1,7 @@
 <?php
 /*
   This script is a helper script for the 'Gallery Import' Facebook Application.
+  @version r4
 
   Instructions:
     1. Create a new 'fb' subdirectory in your Gallery installation (using FTP or SSH), i.e. in the directory that contains main.php etc.
@@ -75,7 +76,10 @@ else if ($_GET['a'] == 'photos') {
 		    }
 		}
 
-		echo "$photo->id\t$photo->title\t/main.php?g2_view=core.DownloadItem&g2_itemId=$photo->id&g2_serialNumber=1\t/main.php?g2_view=core.DownloadItem&g2_itemId=$thumb->id&g2_serialNumber=2\n";
+		$photo->description = str_replace("\n", '\n', str_replace("\r", '', $photo->description));
+		$photo->keywords = str_replace("\n", '\n', str_replace("\r", '', $photo->keywords));
+
+		echo "$photo->id\t$photo->title\t/main.php?g2_view=core.DownloadItem&g2_itemId=$photo->id&g2_serialNumber=1\t/main.php?g2_view=core.DownloadItem&g2_itemId=$thumb->id&g2_serialNumber=2\t$photo->summary\t$photo->description\t$photo->keywords\n";
 	}
 }
 ?>
