@@ -134,6 +134,9 @@ function get_photo_caption($photo) {
 	if (array_search('title', $_SESSION['gallery_captions']) !== FALSE) {
 		$caption .= $photo->title;
 	}
+	if (array_search('url', $_SESSION['gallery_captions']) !== FALSE) {
+		$caption .= $_SESSION['gallery_url'] . '/main.php?g2_itemId=' . $photo->id;
+	}
 	if (array_search('summary', $_SESSION['gallery_captions']) !== FALSE) {
 		if (strlen($caption) > 0) { $caption .= ' - '; }
 		$caption .= $photo->summary;
@@ -147,36 +150,6 @@ function get_photo_caption($photo) {
 		$caption .= $photo->description;
 	}
 	return $caption;
-}
-
-function create_next_album($root_name) {
-	global $facebook;
-	$new_album = null;
-    $albums = $facebook->api_client->photos_getAlbums(null, null, null);
-	if ($albums && is_array($albums)) {
-		$max_num = 0;
-		foreach ($albums as $album) {
-			if (strpos($album['name'], $root_name) === 0) {
-				if ($album['name'] == $root_name && $max_num == 0) {
-					$max_num = 1;
-				}
-				if (ereg($root_name.' \(([0-9]+)\)', $album['name'], $regs)) {
-					$num = (int) $regs[1];
-					if ($num > $max_num) {
-						$max_num = $num;
-					}
-				}
-			}
-		}
-		$next_num = $max_num+1;
-		if ($next_num == 1) {
-			$gallery_name = $root_name;
-		} else {
-			$gallery_name = "$root_name ($next_num)";
-		}
-		$new_album = $facebook->api_client->photos_createAlbum($gallery_name);
-	}
-	return $new_album;
 }
 
 function create_next_album($root_name) {
