@@ -3,20 +3,20 @@ require('init.php');
 header('Content-Type: text/html; charset=utf-8');
 
 if (isset($_POST['gallery_export_url'])) {
-	setcookie('gallery_url', $_POST['gallery_export_url'], time()+360*24*60*60);
-
-	$_SESSION['gallery_export_url'] = $_POST['gallery_export_url'];
-	if (strstr( $_POST['gallery_export_url'], '/fb/export_fb.php') === FALSE) {
+	$_SESSION['gallery_export_url'] = trim($_POST['gallery_export_url']);
+	if (strstr($_SESSION['gallery_export_url'], '/fb/export_fb.php') === FALSE) {
 		die("Error: the export_fb.php script needs to be in a 'fb' subdirectory of your Gallery installation. Example: http://www.domain.com/gallery/fb/export_fb.php");
 	}
-	$_SESSION['gallery_url'] = str_replace('/fb/export_fb.php', '', $_POST['gallery_export_url']);
+	$_SESSION['gallery_url'] = str_replace('/fb/export_fb.php', '', $_SESSION['gallery_export_url']);
 	$url = $_SESSION['gallery_export_url'] . '?a=albums';
 	$html = file_get_contents($url);
-	
-	$albums_infos = explode("\n", $html);
-
-	$template = 'step2.html';
-
+	if ($html === FALSE) {
+		$error404 = TRUE;
+		$template = 'step1.html';
+	} else {
+		$albums_infos = explode("\n", $html);
+		$template = 'step2.html';
+	}
 } else if (isset($_POST['gallery_album']) || isset($_GET['gallery_album'])) {
 	if (isset($_GET['gallery_album'])) {
 		$_POST['gallery_album'] = $_GET['gallery_album'];
@@ -35,10 +35,17 @@ if (isset($_POST['gallery_export_url'])) {
 
 } else if (isset($_POST['gallery_photos'])) {
 	$_SESSION['gallery_selected_photos'] = $_POST['gallery_photos'];
+	if (isset($_POST['captions'])) {
+		$_SESSION['gallery_captions'] = $_POST['captions'];
+	}
+	if (!is_array($_SESSION['gallery_captions'])) {
+		$_SESSION['gallery_captions'] = array($_SESSION['gallery_captions']);
+	}
 	$_SESSION['gallery_redirects'] = 1;
 	$_SESSION['gallery_uploads'] = 0;
 	$_SESSION['gallery_skips'] = 0;
 	$_SESSION['gallery_existing_photos'] = array();
+	session_write_close();
 	$facebook->redirect("http://gallery.danslereseau.com/fb/?gallery_import=".time());
 
 } else if (isset($_GET['gallery_import'])) {
@@ -75,6 +82,7 @@ if (isset($_POST['gallery_export_url'])) {
 
 		$photo_url = array_shift($_SESSION['gallery_selected_photos']);
 		$photo = $_SESSION['gallery_photos'][$photo_url];
+		$photo->caption = get_photo_caption($photo);
 
 		// Try not to re-upload a photo that is already there.
 		$existing_photo = FALSE;
@@ -121,6 +129,56 @@ if (isset($_POST['gallery_export_url'])) {
 	$template = 'step1.html';
 }
 
+function get_photo_caption($photo) {
+	$caption = '';
+	if (array_search('title', $_SESSION['gallery_captions']) !== FALSE) {
+		$caption .= $photo->title;
+	}
+	if (array_search('summary', $_SESSION['gallery_captions']) !== FALSE) {
+		if (strlen($caption) > 0) { $caption .= ' - '; }
+		$caption .= $photo->summary;
+	}
+	if (array_search('keywords', $_SESSION['gallery_captions']) !== FALSE) {
+		if (strlen($caption) > 0) { $caption .= ' - '; }
+		$caption .= $photo->keywords;
+	}
+	if (array_search('description', $_SESSION['gallery_captions']) !== FALSE) {
+		if (strlen($caption) > 0) { $caption .= ' - '; }
+		$caption .= $photo->description;
+	}
+	return $caption;
+}
+
+function create_next_album($root_name) {
+	global $facebook;
+	$new_album = null;
+    $albums = $facebook->api_client->photos_getAlbums(null, null, null);
+	if ($albums && is_array($albums)) {
+		$max_num = 0;
+		foreach ($albums as $album) {
+			if (strpos($album['name'], $root_name) === 0) {
+				if ($album['name'] == $root_name && $max_num == 0) {
+					$max_num = 1;
+				}
+				if (ereg($root_name.' \(([0-9]+)\)', $album['name'], $regs)) {
+					$num = (int) $regs[1];
+					if ($num > $max_num) {
+						$max_num = $num;
+					}
+				}
+			}
+		}
+		$next_num = $max_num+1;
+		if ($next_num == 1) {
+			$gallery_name = $root_name;
+		} else {
+			$gallery_name = "$root_name ($next_num)";
+		}
+		$new_album = $facebook->api_client->photos_createAlbum($gallery_name);
+	}
+	return $new_album;
+}
+
 function create_next_album($root_name) {
 	global $facebook;
 	$new_album = null;
@@ -152,5 +210,6 @@ function create_next_album($root_name) {
 }
 
 include('template.html');
+session_write_close();
 
 ?>

@@ -1,19 +1,9 @@
 <?php
 require('config.php');
 
-// Propagate the PHP session using the FB session_key
-$prefix = isset($_REQUEST['fb_sig_user']) ? 'fb_sig' : $api_key;
-if (isset($_REQUEST[$prefix.'_session_key'])) {
-   session_name($_REQUEST[$prefix.'_session_key']);
-   session_start();
-} else {
-   // Just so there *is* a session for times when there is no fb session
-   session_start();
-}
-
 // using library to upload photos found here: http://wiki.eyermonkey.com/Facebook_Photo_Uploads
 include_once 'client/facebook_php5_photoslib.php';
-$facebook = new FacebookPhotos($api_key, $secret);
+$facebook = new FacebookPhotos($api_key, $secret, true);
 
 $user = $facebook->require_login();
 
@@ -27,4 +17,7 @@ try {
 	$facebook->set_user(null, null);
 	$facebook->redirect($appurl);
 }
+
+session_id(md5($facebook->api_client->session_key));
+session_start();
 ?>
