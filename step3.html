@@ -3,6 +3,7 @@
 	Import captions:<br/>
 
 	<label>Title:</label> <input type="checkbox" value="title" name="captions[]" checked="checked"/><br/>
+	<label>URL:</label> <input type="checkbox" value="url" name="captions[]" /><br/>
 	
 	<?php
 	$extra_captions = FALSE;
@@ -17,6 +18,15 @@
 		<label>Keywords:</label> <input type="checkbox" value="keywords" name="captions[]" /><br/>
 		<label>Description:</label> <input type="checkbox" value="description" name="captions[]" /><br/>
 	<?php endif; ?>
+
+	<?php
+	$extra_caption_url = FALSE;
+	foreach ($photos_infos as $photo_info) {
+		if (ereg("([0-9]+)\t([^\t]*)\t([^\t]+)\t([^\t]+)\t([^\t]*)\t([^\t]*)\t(.*)\t(.+)", $photo_info, $regs)) {
+			$extra_caption_url = TRUE;
+		}
+	}
+	?>
 	<br/>
 
 	Select photos to import.<br/><br/>
