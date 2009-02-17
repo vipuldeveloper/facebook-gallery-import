@@ -7,6 +7,7 @@ if (isset($_POST['gallery_export_url'])) {
 	if (strstr($_SESSION['gallery_export_url'], '/fb/export_fb.php') === FALSE) {
 		die("Error: the export_fb.php script needs to be in a 'fb' subdirectory of your Gallery installation. Example: http://www.domain.com/gallery/fb/export_fb.php");
 	}
+	$_COOKIE['gallery_url'] = $_SESSION['gallery_export_url'];
 	$_SESSION['gallery_url'] = str_replace('/fb/export_fb.php', '', $_SESSION['gallery_export_url']);
 	$url = $_SESSION['gallery_export_url'] . '?a=albums';
 	$html = file_get_contents($url);
@@ -25,7 +26,9 @@ if (isset($_POST['gallery_export_url'])) {
 	$_SESSION['gallery_name'] = str_replace("$albumId;", "", $_POST['gallery_album']);
 
 	$url = $_SESSION['gallery_export_url'] . '?a=photos&id=' . $albumId;
-	$html = file_get_contents($url);
+	
+	$ctx = stream_context_create(array('http' => array('timeout' => 5*60))); 
+	$html = file_get_contents($url, 0, $ctx);
 	
 	$photos_infos = explode("\n", $html);
 
@@ -131,25 +134,33 @@ if (isset($_POST['gallery_export_url'])) {
 
 function get_photo_caption($photo) {
 	$caption = '';
-	if (array_search('title', $_SESSION['gallery_captions']) !== FALSE) {
-		$caption .= $photo->title;
+	if (array_search('title', $_SESSION['gallery_captions']) !== FALSE && !empty($photo->title)) {
+		$caption .= clean_gallery_text(html_entity_decode($photo->title));
+	}
+	if (array_search('summary', $_SESSION['gallery_captions']) !== FALSE && !empty($photo->summary)) {
+		if (strlen($caption) > 0) { $caption .= ' - '; }
+		$caption .= clean_gallery_text(html_entity_decode($photo->summary));
+	}
+	if (array_search('keywords', $_SESSION['gallery_captions']) !== FALSE && !empty($photo->keywords)) {
+		if (strlen($caption) > 0) { $caption .= ' - '; }
+		$caption .= html_entity_decode($photo->keywords);
+	}
+	if (array_search('description', $_SESSION['gallery_captions']) !== FALSE && !empty($photo->description)) {
+		if (strlen($caption) > 0) { $caption .= ' - '; }
+		$caption .= clean_gallery_text(html_entity_decode($photo->description));
 	}
 	if (array_search('url', $_SESSION['gallery_captions']) !== FALSE) {
+		if (strlen($caption) > 0) { $caption .= ' - '; }
 		$caption .= $_SESSION['gallery_url'] . '/main.php?g2_itemId=' . $photo->id;
 	}
-	if (array_search('summary', $_SESSION['gallery_captions']) !== FALSE) {
-		if (strlen($caption) > 0) { $caption .= ' - '; }
-		$caption .= $photo->summary;
-	}
-	if (array_search('keywords', $_SESSION['gallery_captions']) !== FALSE) {
-		if (strlen($caption) > 0) { $caption .= ' - '; }
-		$caption .= $photo->keywords;
-	}
-	if (array_search('description', $_SESSION['gallery_captions']) !== FALSE) {
-		if (strlen($caption) > 0) { $caption .= ' - '; }
-		$caption .= $photo->description;
-	}
 	return $caption;
+}
+
+function clean_gallery_text($text) {
+	$text = eregi_replace('\[url=(.+)\](.+)\[/url\]', '\2 [\1]', $text);
+	$text = str_replace(array('[b]', '[/b]', '[i]', '[/i]', '[/color]', '[list]', '[/list]', '[*]'), '', $text);
+	$text = eregi_replace('\[color=#......\]', '', $text);
+	return $text;
 }
 
 function create_next_album($root_name) {

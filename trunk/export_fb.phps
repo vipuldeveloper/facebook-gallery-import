@@ -1,7 +1,7 @@
 <?php
 /*
   This script is a helper script for the 'Gallery Import' Facebook Application.
-  @version r4
+  @version r5
 
   Instructions:
     1. Create a new 'fb' subdirectory in your Gallery installation (using FTP or SSH), i.e. in the directory that contains main.php etc.
@@ -54,9 +54,10 @@ else if ($_GET['a'] == 'photos') {
 	list ($ret, $photos) = GalleryCoreApi::fetchChildItemIds($albums[0]);
 	list ($ret, $thumbs) = GalleryCoreApi::fetchThumbnailsByItemIds($photos);
 	list ($ret, $photos) = GalleryCoreApi::loadEntitiesById($photos);
+	var_dump($photos);
 	
 	foreach ($photos as $photo) {
-		if ($photo->mimeType != 'image/jpeg') {
+		if ($photo->mimeType != 'image/jpeg' && $photo->mimeType != 'image/gif' && $photo->mimeType != 'image/png') {
 			continue;
 		}
 		$thumb = $thumbs[$photo->id];
