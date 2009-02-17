@@ -3,12 +3,20 @@
 	Import captions:<br/>
 
 	<label>Title:</label> <input type="checkbox" value="title" name="captions[]" checked="checked"/><br/>
-	<label>URL:</label> <input type="checkbox" value="url" name="captions[]" /><br/>
 	
 	<?php
 	$extra_captions = FALSE;
 	foreach ($photos_infos as $photo_info) {
 		if (ereg("([0-9]+)\t([^\t]*)\t([^\t]+)\t([^\t]+)\t([^\t]+)\t([^\t]+)\t(.+)", $photo_info, $regs)) {
+			$extra_captions = TRUE;
+		}
+		if (ereg("([0-9]+)\t([^\t]*)\t([^\t]+)\t([^\t]+)\t([^\t]*)\t([^\t]*)\t(.+)", $photo_info, $regs)) {
+			$extra_captions = TRUE;
+		}
+		if (ereg("([0-9]+)\t([^\t]*)\t([^\t]+)\t([^\t]+)\t([^\t]*)\t([^\t]+)\t(.*)", $photo_info, $regs)) {
+			$extra_captions = TRUE;
+		}
+		if (ereg("([0-9]+)\t([^\t]*)\t([^\t]+)\t([^\t]+)\t([^\t]+)\t([^\t]*)\t(.*)", $photo_info, $regs)) {
 			$extra_captions = TRUE;
 		}
 	}
@@ -19,16 +27,9 @@
 		<label>Description:</label> <input type="checkbox" value="description" name="captions[]" /><br/>
 	<?php endif; ?>
 
-	<?php
-	$extra_caption_url = FALSE;
-	foreach ($photos_infos as $photo_info) {
-		if (ereg("([0-9]+)\t([^\t]*)\t([^\t]+)\t([^\t]+)\t([^\t]*)\t([^\t]*)\t(.*)\t(.+)", $photo_info, $regs)) {
-			$extra_caption_url = TRUE;
-		}
-	}
-	?>
-	<br/>
+	<label>URL:</label> <input type="checkbox" value="url" name="captions[]" /><br/>
 
+	<br/>
 	Select photos to import.<br/><br/>
 
 	<?php if ($num_photos == 0) : ?>
@@ -55,7 +56,7 @@
 		foreach ($photos_infos as $photo_info) {
 			if (ereg("([0-9]+)\t([^\t]*)\t([^\t]+)\t([^\t]+)", $photo_info, $regs)) {
 				$photo = (object) array('id' => $regs[1], 'title' => $regs[2], 'url' => $regs[3], 'thumbUrl' => $regs[4]);
-				if (ereg("([0-9]+)\t([^\t]*)\t([^\t]+)\t([^\t]+)\t([^\t]+)\t([^\t]+)\t(.+)", $photo_info, $regs)) {
+				if (ereg("([0-9]+)\t([^\t]*)\t([^\t]+)\t([^\t]+)\t([^\t]*)\t([^\t]*)\t(.*)", $photo_info, $regs)) {
 					$photo->summary = $regs[5];
 					$photo->description = str_replace('\n', "\n", $regs[6]);
 					$photo->keywords = str_replace('\n', "\n", $regs[7]);
@@ -64,10 +65,10 @@
 				echo '<div>
 					<input type="checkbox" name="gallery_photos[]" value="'.$photo->id.'" '
 					.(!isset($_GET['select']) || $_GET['select'] == 'all' ? 'checked="checked"' : '').'/>
-					'.$photo->title.'
+					'.clean_gallery_text($photo->title).'
 					<a href="'.$photo->url.'"><img src="'.$_SESSION['gallery_url'].$photo->thumbUrl.'"/></a>
-					'.(!empty($photo->summary) ? 'Summary: ' . $photo->summary : '').'
-					'.(!empty($photo->description) ? 'Description: ' . $photo->description : '').'
+					'.(!empty($photo->summary) ? 'Summary: ' . clean_gallery_text($photo->summary) : '').'
+					'.(!empty($photo->description) ? 'Description: ' . clean_gallery_text($photo->description) : '').'
 					'.(!empty($photo->keywords) ? 'Keywords: ' . $photo->keywords : '').'
 				</div>';
 			}
