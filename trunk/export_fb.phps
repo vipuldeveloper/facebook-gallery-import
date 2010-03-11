@@ -54,7 +54,6 @@ else if ($_GET['a'] == 'photos') {
 	list ($ret, $photos) = GalleryCoreApi::fetchChildItemIds($albums[0]);
 	list ($ret, $thumbs) = GalleryCoreApi::fetchThumbnailsByItemIds($photos);
 	list ($ret, $photos) = GalleryCoreApi::loadEntitiesById($photos);
-	var_dump($photos);
 	
 	foreach ($photos as $photo) {
 		if ($photo->mimeType != 'image/jpeg' && $photo->mimeType != 'image/gif' && $photo->mimeType != 'image/png') {

@@ -56,6 +56,12 @@
 		foreach ($photos_infos as $photo_info) {
 			if (ereg("([0-9]+)\t([^\t]*)\t([^\t]+)\t([^\t]+)", $photo_info, $regs)) {
 				$photo = (object) array('id' => $regs[1], 'title' => $regs[2], 'url' => $regs[3], 'thumbUrl' => $regs[4]);
+				if ($photo->url[0] == '/') {
+					$photo->url = $_SESSION['gallery_url'] . $photo->url;
+				}
+				if ($photo->thumbUrl[0] == '/') {
+					$photo->thumbUrl = $_SESSION['gallery_url'] . $photo->thumbUrl;
+				}
 				if (ereg("([0-9]+)\t([^\t]*)\t([^\t]+)\t([^\t]+)\t([^\t]*)\t([^\t]*)\t(.*)", $photo_info, $regs)) {
 					$photo->summary = $regs[5];
 					$photo->description = str_replace('\n', "\n", $regs[6]);
@@ -66,7 +72,7 @@
 					<input type="checkbox" name="gallery_photos[]" value="'.$photo->id.'" '
 					.(!isset($_GET['select']) || $_GET['select'] == 'all' ? 'checked="checked"' : '').'/>
 					'.clean_gallery_text($photo->title).'
-					<a href="'.$photo->url.'"><img src="'.$_SESSION['gallery_url'].$photo->thumbUrl.'"/></a>
+					<a href="'.$photo->url.'"><img src="'.$photo->thumbUrl.'"/></a>
 					'.(!empty($photo->summary) ? 'Summary: ' . clean_gallery_text($photo->summary) : '').'
 					'.(!empty($photo->description) ? 'Description: ' . clean_gallery_text($photo->description) : '').'
 					'.(!empty($photo->keywords) ? 'Keywords: ' . $photo->keywords : '').'
