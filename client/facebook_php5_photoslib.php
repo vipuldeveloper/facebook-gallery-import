@@ -97,9 +97,13 @@ class FacebookPhotosRestClient extends FacebookRestClient {
       $type = strtolower($match[1]);
       if ($type == 'jpg') $type = 'jpeg';
       
+      $file_content = file_get_contents(str_replace(' ','+', $filename));
+      if ($file_content === FALSE) {
+        throw new Exception("Can't fetch URL.");
+      }
       $content[] = 'Content-Disposition: form-data; filename="' . $filename . '"' . "\r\n" . 
                    'Content-Type: image/' . $type . "\r\n\r\n" . 
-                   file_get_contents(str_replace(' ','+', $filename)) . "\r\n--" . $boundary;
+                   $file_content . "\r\n--" . $boundary;
     }
     $content[] = array_pop($content) . '--';
     $content = implode("\r\n", $content);

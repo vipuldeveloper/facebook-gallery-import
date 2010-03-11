@@ -5,10 +5,25 @@ header('Content-Type: text/html; charset=utf-8');
 if (isset($_POST['gallery_export_url'])) {
 	$_SESSION['gallery_export_url'] = trim($_POST['gallery_export_url']);
 	if (strstr($_SESSION['gallery_export_url'], '/fb/export_fb.php') === FALSE) {
-		die("Error: the export_fb.php script needs to be in a 'fb' subdirectory of your Gallery installation. Example: http://www.domain.com/gallery/fb/export_fb.php");
+		if (strstr($_SESSION['gallery_export_url'], '/export_facebook/export_fb') === FALSE) {
+			die("Error: the export_fb.php script needs to be in a 'fb' subdirectory of your Gallery installation. Example: http://www.domain.com/gallery/fb/export_fb.php");
+		}
+	}
+	if (strpos($_SESSION['gallery_export_url'], '/fb/export_fb.php')) {
+		$_SESSION['gallery_version'] = 2;
+	} else {
+		$_SESSION['gallery_version'] = 3;
 	}
 	$_COOKIE['gallery_url'] = $_SESSION['gallery_export_url'];
-	$_SESSION['gallery_url'] = str_replace('/fb/export_fb.php', '', $_SESSION['gallery_export_url']);
+	if (preg_match('@(https?://.+)/index.php/export_facebook/export_fb@', $_SESSION['gallery_export_url'], $regs)) {
+		$_SESSION['gallery_url'] = $regs[1];
+	} else if (preg_match('@(https?://.+)/export_facebook/export_fb@', $_SESSION['gallery_export_url'], $regs)) {
+		$_SESSION['gallery_url'] = $regs[1];
+	} else if (preg_match('@(https?://.+)/fb/export_fb.php@', $_SESSION['gallery_export_url'], $regs)) {
+		$_SESSION['gallery_url'] = $regs[1];
+	} else {
+		die("Error: Can't isolate hostname in URL " . $_SESSION['gallery_export_url']);
+	}
 	$url = $_SESSION['gallery_export_url'] . '?a=albums';
 	$html = file_get_contents($url);
 	if ($html === FALSE) {
@@ -86,7 +101,7 @@ if (isset($_POST['gallery_export_url'])) {
 		$photo_url = array_shift($_SESSION['gallery_selected_photos']);
 		$photo = $_SESSION['gallery_photos'][$photo_url];
 		$photo->caption = get_photo_caption($photo);
-
+		
 		// Try not to re-upload a photo that is already there.
 		$existing_photo = FALSE;
 		if (!empty($_SESSION['gallery_existing_photos'])) {
@@ -98,7 +113,11 @@ if (isset($_POST['gallery_export_url'])) {
 			}
 		}
 		if (!$existing_photo) {
-			$photo_url = $_SESSION['gallery_url'] . $photo->url;
+			if ($photo->url[0] == '/') {
+				$photo_url = $_SESSION['gallery_url'] . $photo->url;
+			} else {
+				$photo_url = $photo->url;
+			}
 			try {
 			    $photo = $facebook->api_client->photos_upload($photo_url, $_SESSION['gallery_album']['aid'], $photo->caption);
 			} catch (FacebookRestClientException $e) {
@@ -113,6 +132,8 @@ if (isset($_POST['gallery_export_url'])) {
 					# Retry the upload
 				    $photo = $facebook->api_client->photos_upload($photo_url, $_SESSION['gallery_album']['aid'], $photo->caption);
 				}
+  		} catch (Exception $e) {
+  			$facebook->redirect("http://gallery.danslereseau.com/fb/?url_get_error=" . urlencode($photo_url));
 			}
 			$_SESSION['gallery_uploads']++;
 			break;
@@ -127,6 +148,9 @@ if (isset($_POST['gallery_export_url'])) {
 		$_SESSION['gallery_redirects'] = 0;
 		$template = 'step4.html';
 	}
+
+} else if (isset($_GET['url_get_error'])) {
+  die("There was a problem trying to fetch a photo using <a href=\"" . $_GET['url_get_error'] . "\">the following URL</a>.<br/>Please check that this URL returns an image file for users not logged in on your Gallery, then try again.");
 
 } else {
 	$template = 'step1.html';
@@ -151,7 +175,11 @@ function get_photo_caption($photo) {
 	}
 	if (array_search('url', $_SESSION['gallery_captions']) !== FALSE) {
 		if (strlen($caption) > 0) { $caption .= ' - '; }
-		$caption .= $_SESSION['gallery_url'] . '/main.php?g2_itemId=' . $photo->id;
+		if ($_SESSION['gallery_version'] == 2) {
+			$caption .= $_SESSION['gallery_url'] . '/main.php?g2_itemId=' . $photo->id;
+		} else {
+			$caption .= $_SESSION['gallery_url'] . '/index.php/photos/' . $photo->id;
+		}
 	}
 	return $caption;
 }
