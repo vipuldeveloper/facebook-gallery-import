@@ -185,9 +185,9 @@ function get_photo_caption($photo) {
 }
 
 function clean_gallery_text($text) {
-	$text = eregi_replace('\[url=(.+)\](.+)\[/url\]', '\2 [\1]', $text);
+	$text = preg_replace('@\[url=(.+)\](.+)\[/url\]@i', '\2 [\1]', $text);
 	$text = str_replace(array('[b]', '[/b]', '[i]', '[/i]', '[/color]', '[list]', '[/list]', '[*]'), '', $text);
-	$text = eregi_replace('\[color=#......\]', '', $text);
+	$text = preg_replace('@\[color=#......\]@i', '', $text);
 	return $text;
 }
 
@@ -202,7 +202,7 @@ function create_next_album($root_name) {
 				if ($album['name'] == $root_name && $max_num == 0) {
 					$max_num = 1;
 				}
-				if (ereg($root_name.' \(([0-9]+)\)', $album['name'], $regs)) {
+				if (preg_match('@'.$root_name.' \(([0-9]+)\)@', $album['name'], $regs)) {
 					$num = (int) $regs[1];
 					if ($num > $max_num) {
 						$max_num = $num;
