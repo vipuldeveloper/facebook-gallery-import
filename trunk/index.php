@@ -4,12 +4,12 @@ header('Content-Type: text/html; charset=utf-8');
 
 if (isset($_POST['gallery_export_url'])) {
 	$_SESSION['gallery_export_url'] = trim($_POST['gallery_export_url']);
-	if (strstr($_SESSION['gallery_export_url'], '/fb/export_fb.php') === FALSE) {
+	if (strstr($_SESSION['gallery_export_url'], '/fb/export_fb') === FALSE) {
 		if (strstr($_SESSION['gallery_export_url'], '/export_facebook/export_fb') === FALSE) {
-			die("Error: the export_fb.php script needs to be in a 'fb' subdirectory of your Gallery installation. Example: http://www.domain.com/gallery/fb/export_fb.php");
+			die("Error: Gallery2: the export_fb.php script needs to be in a 'fb' subdirectory of your Gallery installation. Example: http://www.domain.com/gallery/fb/export_fb.php. Gallery3: your URL needs to end with /export_facebook/export_fb");
 		}
 	}
-	if (strpos($_SESSION['gallery_export_url'], '/fb/export_fb.php')) {
+	if (strpos($_SESSION['gallery_export_url'], '/fb/export_fb')) {
 		$_SESSION['gallery_version'] = 2;
 	} else {
 		$_SESSION['gallery_version'] = 3;
@@ -19,7 +19,7 @@ if (isset($_POST['gallery_export_url'])) {
 		$_SESSION['gallery_url'] = $regs[1];
 	} else if (preg_match('@(https?://.+)/export_facebook/export_fb@', $_SESSION['gallery_export_url'], $regs)) {
 		$_SESSION['gallery_url'] = $regs[1];
-	} else if (preg_match('@(https?://.+)/fb/export_fb.php@', $_SESSION['gallery_export_url'], $regs)) {
+	} else if (preg_match('@(https?://.+)/fb/export_fb@', $_SESSION['gallery_export_url'], $regs)) {
 		$_SESSION['gallery_url'] = $regs[1];
 	} else {
 		die("Error: Can't isolate hostname in URL " . $_SESSION['gallery_export_url']);
