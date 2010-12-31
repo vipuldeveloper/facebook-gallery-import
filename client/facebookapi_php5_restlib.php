@@ -783,6 +783,14 @@ function toggleDisplay(id, type) {
   }
 
   /**
+   * Returns whether or not the user corresponding to the current session object has granted the app the specified extended permission
+   * @return boolean
+   */
+  public function &users_hasAppPermission($ext_perm, $uid=null) {
+    return $this->call_method('facebook.users.hasAppPermission', array('uid' => $uid, 'ext_perm' => $ext_perm));
+  }
+
+  /**
    * Sets the FBML for the profile of the user attached to this session
    * @param   string   $markup           The FBML that describes the profile presence of this app for the user
    * @param   int      $uid              The user

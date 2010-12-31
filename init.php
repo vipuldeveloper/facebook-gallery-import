@@ -12,7 +12,10 @@ try {
 	if (!$facebook->api_client->users_isAppAdded()) {
 		$facebook->redirect($facebook->get_add_url());
 	}
-	#error_log("Debug in Gallery export FB app: try 2");
+	if (!$facebook->api_client->users_hasAppPermission('user_photos')) {
+		$url = "http://www.facebook.com/connect/prompt_permissions.php?api_key=$api_key&ext_perm=user_photos&next=".urlencode($appurl)."&cancel=".urlencode("http://www.facebook.com/apps/application.php?id=2390304162")."&display=page";
+		$facebook->redirect($url);
+	}
 } catch (Exception $ex) {
 	error_log("Error in Gallery export FB app: " . var_export($ex, TRUE) . "; user = " . var_export($user, TRUE));
 	// this will clear cookies for your application and redirect them to a login prompt
