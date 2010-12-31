@@ -5,10 +5,10 @@
 	<select name="gallery_album">
 		<?php
 		foreach ($albums_infos as $album_info) {
-			if (ereg("([0-9]+)\t([0-9]+)\t(.+)\t([0-9]+)", $album_info, $regs)) {
+			if (preg_match("@([0-9]+)\t([0-9]+)\t(.+)\t([0-9]+)@", $album_info, $regs)) {
 				echo '<option value="'.$regs[2].';'.str_replace('"','&quot;',$regs[3]).'">'.str_repeat("&nbsp;&nbsp;",$regs[1]).$regs[3].' ('.$regs[4].' photos)</option>';
 			}
-			else if (ereg("([0-9]+)\t([0-9]+)\t(.+)", $album_info, $regs)) {
+			else if (preg_match("@([0-9]+)\t([0-9]+)\t(.+)@", $album_info, $regs)) {
 				echo '<option value="'.$regs[2].';'.str_replace('"','&quot;',$regs[3]).'">'.str_repeat("&nbsp;&nbsp;",$regs[1]).$regs[3].'</option>';
 			}
 		}
